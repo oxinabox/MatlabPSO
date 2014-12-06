@@ -78,7 +78,7 @@ function [ Solution, Score, gbest_history ] = PSO( particles, ...
         g_vel = SOCIAL * rand_factor(nDimentions,nParticles) .* g_displace;
         
         vel = i_vel + p_vel + g_vel;  
-        vel = min(max(vel,-maxVel),maxVel); %CLIP velocity
+        vel = min(vel,repmat(maxVel,1,nParticles)); % Clip to be less than maxVel
         
         vel(:,unfit & no_pbest)=rand_vel(nnz(unfit& no_pbest));
         
@@ -90,7 +90,7 @@ function [ Solution, Score, gbest_history ] = PSO( particles, ...
 
         %CLIP VALUES
         swarm(logical(forceInt),:) = round(swarm(logical(forceInt),:));
-        swarm = max( min( (swarm), maximum),minimum); 
+        swarm = max( min( (swarm), repmat(maximum,1,nParticles)),repmat(minimum, 1,nParticles)); 
         
         
         gen_num
