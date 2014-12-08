@@ -3,19 +3,21 @@ function [ Solution, Score, gbest_history ] = PSO( particles, ...
                                       Limits, ...
                                       generations, ...
                                       Eval,...
+                                      priors, ...
                                       saveName,...
                                       convergence,...
                                       acc_coeffs)
                                   
-    %%% PSO is configured to minimise the score              
+    %%% PSO is configured to minimise the score      
+    %%% Priors should have column vectors of prior known good values.
     tic
-    if ((nargin < 6) || (isempty(saveName)))
+    if ((nargin < 7) || (isempty(saveName)))
         saveName = '';
     end
-    if ((nargin < 7) || (isempty(convergence)))
+    if ((nargin < 8) || (isempty(convergence)))
         convergence = 0;
     end
-    if ((nargin < 8) || (isempty(acc_coeffs)))
+    if ((nargin < 9) || (isempty(acc_coeffs)))
         acc_coeffs = [0.9, 2];
     end
     
@@ -47,6 +49,9 @@ function [ Solution, Score, gbest_history ] = PSO( particles, ...
     
     vel=rand_vel(nParticles);
     swarm = rand_pos(nParticles); % Each col vector represents a particle solution
+    
+    swarm(:,  1:size(priors,2)) = priors;
+    
     swarm = clip_pos(swarm);
     
     pbest = Inf((nDimentions + 1), nParticles); % The personal best solution of each particle
