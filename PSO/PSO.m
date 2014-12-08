@@ -34,6 +34,12 @@ function [ Solution, Score, gbest_history ] = PSO( particles, ...
     maximum  = Limits(:,2);
     maxVel   = Limits(:,3);
     forceInt = Limits(:,4);
+    
+    
+    function swarm = clip_pos (swarm)
+        swarm(logical(forceInt),:) = round(swarm(logical(forceInt),:));
+        swarm = max( min( (swarm), repmat(maximum,1,nParticles)),repmat(minimum, 1,nParticles)); 
+    end
 
     % Initial Values
     rand_vel = @(n) random_velocity(minimum, maximum, maxVel, nDimentions,n);
@@ -41,14 +47,14 @@ function [ Solution, Score, gbest_history ] = PSO( particles, ...
     
     vel=rand_vel(nParticles);
     swarm = rand_pos(nParticles); % Each col vector represents a particle solution
-    swarm(logical(forceInt),:) = round(swarm(logical(forceInt),:));
+    swarm = clip_pos(swarm);
     
     pbest = Inf((nDimentions + 1), nParticles); % The personal best solution of each particle
     
     gbest = Inf((nDimentions + 1), 1); % The globally best solution
     gbest_history = zeros((nDimentions + 1), nGenerations); %Store the gbest for each generation
     
-    for  gen_num=1:nParticles 
+    for  gen_num=1:nGenerations 
         % Update personal bests
         score = zeros(1,nParticles);
         for particle = 1:nParticles
@@ -88,9 +94,7 @@ function [ Solution, Score, gbest_history ] = PSO( particles, ...
 		% If a particle is not fit and never has found a pbest, then it teleports randomly
         swarm(:,unfit & no_pbest)=rand_pos(nnz(unfit& no_pbest));
 
-        %CLIP VALUES
-        swarm(logical(forceInt),:) = round(swarm(logical(forceInt),:));
-        swarm = max( min( (swarm), repmat(maximum,1,nParticles)),repmat(minimum, 1,nParticles)); 
+        swarm = clip_pos(swarm);
         
         
         gen_num
@@ -98,6 +102,7 @@ function [ Solution, Score, gbest_history ] = PSO( particles, ...
 
         deviation = getPSOswarmDeviation(swarm);
         if (deviation < convergence)
+            disp('Converged')
             break;
         end
         
@@ -126,5 +131,6 @@ function [vel] = random_velocity(minimumPos,maximumPos, maxVel, nDim, nParticles
     vel = min(vel,repmat(maxVel,1,nParticles)); % Clip to be less than maxVel
     vel = (-1).^randi(2,nDim,nParticles).*vel; %Randomise direction
 end
+
 
     
