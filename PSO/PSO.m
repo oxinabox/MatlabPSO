@@ -49,8 +49,9 @@ function [ Solution, Score, gbest_history ] = PSO( particles, ...
     
     vel=rand_vel(nParticles);
     swarm = rand_pos(nParticles); % Each col vector represents a particle solution
-    
-    swarm(:,  1:size(priors,2)) = priors;
+    if ~isempty(priors)
+        swarm(:,  1:size(priors,2)) = priors;
+    end
     
     swarm = clip_pos(swarm);
     
@@ -105,16 +106,17 @@ function [ Solution, Score, gbest_history ] = PSO( particles, ...
         gen_num
         gbest
 
-        deviation = getPSOswarmDeviation(swarm);
-        if (deviation < convergence)
-            disp('Converged')
-            break;
-        end
+
         
         if ~isempty(saveName)
             csvwrite(saveName, gbest_history);
         end 
         
+        deviation = getPSOswarmDeviation(swarm);
+        if (deviation < convergence)
+            disp('Converged')
+            break;
+        end
     end
     Solution = gbest(1:nDimentions);
     Score = gbest(nDimentions+1);
