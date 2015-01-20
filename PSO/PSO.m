@@ -1,15 +1,40 @@
-function [ Solution, Score, gbest_history ] = PSO( particles, ...
-                                      dimension,...
+function [ Solution, Score, gbest_history ] = PSO( nParticles, ...
+                                      nDimensions,...
                                       Limits, ...
-                                      generations, ...
+                                      nGenerations, ...
                                       Eval,...
                                       priors, ...
                                       saveName,...
                                       convergence,...
-                                      acc_coeffs)
-                                  
+                                      inertia,cognition,social)
     %%% PSO is configured to minimise the score      
-    %%% Priors should have column vectors of prior known good values.
+    %%% 
+    %%% nParticles: How many particles in the swarm.
+    %%% this is how many times the Eval function will be called each
+    %%% generation.
+    %%%
+    %%% Limits should be a nDimentions x 4 matrix, 
+    %%% For each dimention (row)
+    %%% the first column specifying the minimum value (inclusive)
+    %%% the second column specifying the maximum value (inclusive)
+    %%% the thirst column specifying the maximum velocity that can be done
+    %%% to that dimention (ie the most it can change between two
+    %%% generations)
+    %%% The forth column is a logical value specifying if that dimention
+    %%% should be always an integer (setting it to true will make it round)
+    %%% For example: a row of limits being [1.5, 10.0, Inf, false], allows
+    %%% the dimention to be any value from 1.5 to 10.0, and move with
+    %%% out restriction on speed.
+    %%% where are [1,3,1,true], allows the particles value for that
+    %%% dimention to only take the value 1,2 or 3, and it can only change
+    %%% by 1 step (either direction) at a time.
+    %%%
+    %%%
+    %%% Priors (optional) a column vectors of prior known good values.
+    %%% Each column should have length equal to nDimentions
+    %%% Set to [] to have none.
+    
+    
     tic
     if ((nargin < 7) || (isempty(saveName)))
         saveName = '';
@@ -17,20 +42,20 @@ function [ Solution, Score, gbest_history ] = PSO( particles, ...
     if ((nargin < 8) || (isempty(convergence)))
         convergence = 0;
     end
-    if ((nargin < 9) || (isempty(acc_coeffs)))
-        acc_coeffs = [0.9, 2];
+    
+    if ~exist('inertia', 'var')
+        inertial = 0.9;
     end
     
-   
-    % Parameter setting
-    INERTIA = acc_coeffs(1);
-    COGNITION = acc_coeffs(2);
-    SOCIAL = acc_coeffs(2);
+    if ~exist('cognition', 'var')
+        cognition = 2;
+    end
+        
     
-    % Variable initialisation
-    nDimentions = dimension;
-    nParticles = particles;
-    nGenerations = generations;
+    if ~exist('social', 'var')
+        social = cognition;
+    end
+    
     
     minimum  = Limits(:,1);
     maximum  = Limits(:,2);
@@ -85,9 +110,9 @@ function [ Solution, Score, gbest_history ] = PSO( particles, ...
         p_displace = (pbest(1:nDimentions,:)-swarm);
         g_displace = (bsxfun(@minus,gbest(1:nDimentions,1),swarm));
         
-        i_vel = INERTIA*vel;
-        p_vel =  COGNITION * rand_factor(nDimentions,nParticles) .* p_displace;
-        g_vel = SOCIAL * rand_factor(nDimentions,nParticles) .* g_displace;
+        i_vel = inertia*vel;
+        p_vel =  cognition * rand_factor(nDimentions,nParticles) .* p_displace;
+        g_vel = social * rand_factor(nDimentions,nParticles) .* g_displace;
         
         vel = i_vel + p_vel + g_vel;  
         vel = min(vel,repmat(maxVel,1,nParticles)); % Clip to be less than maxVel
@@ -109,7 +134,7 @@ function [ Solution, Score, gbest_history ] = PSO( particles, ...
 
         
         if ~isempty(saveName)
-            csvwrite(saveName, gbest_history);
+            csvwrite(saveName, gbest_history');
         end 
         
         deviation = getPSOswarmDeviation(swarm);
